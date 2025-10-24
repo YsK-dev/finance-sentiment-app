@@ -1,32 +1,8 @@
-import sys
-import os
-from pathlib import Path
-
-# Add the backend directory to Python path for proper module resolution
-# This should be /opt/render/project/src/backend on Render
-backend_dir = Path(__file__).resolve().parent.parent
-print(f"DEBUG: __file__ = {__file__}")
-print(f"DEBUG: backend_dir = {backend_dir}")
-print(f"DEBUG: backend_dir exists = {backend_dir.exists()}")
-print(f"DEBUG: sys.path before = {sys.path[:3]}")
-
-if str(backend_dir) not in sys.path:
-    sys.path.insert(0, str(backend_dir))
-    print(f"DEBUG: Added {backend_dir} to sys.path")
-
-print(f"DEBUG: sys.path after = {sys.path[:3]}")
-
-# Check if app directory exists
-app_dir = backend_dir / "app"
-print(f"DEBUG: app_dir = {app_dir}")
-print(f"DEBUG: app_dir exists = {app_dir.exists()}")
-if app_dir.exists():
-    print(f"DEBUG: app_dir contents = {list(app_dir.iterdir())}")
-
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from dotenv import load_dotenv
+import os
 
 from app.routes import sentiment, analysis, data
 from app.utils.database import connect_db, close_db
