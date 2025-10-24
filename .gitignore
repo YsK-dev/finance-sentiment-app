@@ -46,8 +46,7 @@ logs/
 *.sqlite
 *.sqlite3
 
-# Model cache
-models/
+# Model cache (but not our app/models code directory)
 .cache/
 huggingface/
 
