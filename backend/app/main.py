@@ -1,8 +1,16 @@
+import sys
+import os
+from pathlib import Path
+
+# Add the backend directory to Python path for proper module resolution
+backend_dir = Path(__file__).parent.parent
+if str(backend_dir) not in sys.path:
+    sys.path.insert(0, str(backend_dir))
+
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from dotenv import load_dotenv
-import os
 
 from app.routes import sentiment, analysis, data
 from app.utils.database import connect_db, close_db
