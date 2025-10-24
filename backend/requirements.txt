@@ -13,10 +13,11 @@ pymongo==4.5.0
 motor==3.3.2
 
 # AI/ML for sentiment analysis
-transformers==4.44.2
+transformers>=4.45.0
 torch>=2.5.0
-sentencepiece==0.2.0
-safetensors==0.4.5
+sentencepiece>=0.2.0
+safetensors>=0.4.5
+tokenizers>=0.20.0
 
 # Data processing
 numpy==1.26.4
