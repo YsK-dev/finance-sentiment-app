@@ -10,6 +10,8 @@ services:
     envVars:
       - key: PYTHON_VERSION
         value: 3.13.4
+      - key: USE_LIGHTWEIGHT_SENTIMENT
+        value: "true"
       - key: MONGODB_URI
         sync: false
       - key: DB_NAME

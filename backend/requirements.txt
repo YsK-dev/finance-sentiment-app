@@ -12,12 +12,14 @@ pydantic-core==2.23.4
 pymongo==4.5.0
 motor==3.3.2
 
-# AI/ML for sentiment analysis
-transformers>=4.45.0
-torch>=2.5.0
-sentencepiece>=0.2.0
-safetensors>=0.4.5
-tokenizers>=0.20.0
+# AI/ML for sentiment analysis (OPTIONAL - only needed for full transformer-based analysis)
+# These are memory-heavy and not required if USE_LIGHTWEIGHT_SENTIMENT=true
+# Uncomment if you have sufficient memory (>2GB RAM) and want advanced AI sentiment analysis
+# transformers>=4.45.0
+# torch>=2.5.0
+# sentencepiece>=0.2.0
+# safetensors>=0.4.5
+# tokenizers>=0.20.0
 
 # Data processing
 numpy==1.26.4
