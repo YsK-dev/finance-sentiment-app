@@ -339,8 +339,6 @@ For production use, you may want to integrate with:
 
 See **[DATA_SOURCES_GUIDE.md](DATA_SOURCES_GUIDE.md)** for detailed setup instructions.
 
-See **[DATA_SOURCES_GUIDE.md](DATA_SOURCES_GUIDE.md)** for detailed setup instructions.
-
 ## 📚 Documentation
 
 Comprehensive documentation is available:
@@ -352,6 +350,8 @@ Comprehensive documentation is available:
 - **[YOUTUBE_FIX.md](YOUTUBE_FIX.md)** - YouTube API implementation details
 - **[API_DOCS.md](API_DOCS.md)** - Complete API reference
 - **[FINAL_SUMMARY.md](FINAL_SUMMARY.md)** - Complete overview of all features and fixes
+- **[DEPLOY_TO_RENDER.md](DEPLOY_TO_RENDER.md)** - Step-by-step deployment guide
+- **[CORS_FIX_STEPS.md](CORS_FIX_STEPS.md)** - CORS troubleshooting for production
 
 ## 🔧 Management Scripts
 
@@ -444,7 +444,17 @@ For comprehensive troubleshooting, see **[STATUS.md](STATUS.md)** or **[QUICK_RE
 
 ### Common Issues
 
-#### 1. API Requests Being Blocked (`ERR_BLOCKED_BY_CLIENT`)
+#### 1. CORS Errors in Production
+
+**Problem**: `Access to XMLHttpRequest has been blocked by CORS policy`
+
+**Solution**: 
+- Ensure your frontend URL is added to the backend CORS configuration
+- Check `backend/app/main.py` includes your domain in `allowed_origins`
+- Set `FRONTEND_URL` environment variable in Render backend settings
+- See **[CORS_FIX_STEPS.md](CORS_FIX_STEPS.md)** for detailed fix
+
+#### 2. API Requests Being Blocked (`ERR_BLOCKED_BY_CLIENT`)
 
 **Problem**: Browser extension (ad blocker) is blocking API requests to localhost
 
@@ -452,7 +462,7 @@ For comprehensive troubleshooting, see **[STATUS.md](STATUS.md)** or **[QUICK_RE
 - **Chrome/Edge**: Click extension icon → Disable for this site
 - **Firefox**: Click shield icon → Turn off Enhanced Tracking Protection
 
-#### 2. YouTube Analysis Fails (404 Error)
+#### 3. YouTube Analysis Fails (404 Error)
 
 **Problem**: Video doesn't have captions/transcripts available
 
@@ -461,14 +471,24 @@ For comprehensive troubleshooting, see **[STATUS.md](STATUS.md)** or **[QUICK_RE
 - Look for the "CC" icon on YouTube videos
 - The app now supports automatic translation for non-English captions
 
-#### 3. "Limited data sources" Warning
+#### 4. "Limited data sources" Warning
 
 **Solutions**:
 - Wait a few seconds for RSS feeds to load
 - Try popular stocks (AAPL, TSLA, GOOGL work best)
 - Add free API keys (NewsAPI, Finnhub) for 8-12 sources
 
-#### 4. Model Loading Issues
+#### 5. Cold Start Delays (Production)
+
+**Problem**: First request takes 30-60 seconds on Render.com free tier
+
+**Solution**:
+- This is normal for Render's free tier (services sleep after 15 minutes)
+- Subsequent requests will be fast
+- Use [UptimeRobot](https://uptimerobot.com/) to keep the service awake (ping every 5 min)
+- Or upgrade to Render Starter plan ($7/month) for always-on service
+
+#### 6. Model Loading Issues
 
 If the FinBERT model fails to load:
 ```bash
@@ -479,7 +499,7 @@ rm -rf ~/.cache/huggingface/
 python -c "from transformers import AutoTokenizer, AutoModelForSequenceClassification; AutoTokenizer.from_pretrained('ProsusAI/finbert'); AutoModelForSequenceClassification.from_pretrained('ProsusAI/finbert')"
 ```
 
-#### 5. MongoDB Connection Issues
+#### 7. MongoDB Connection Issues
 
 ```bash
 # Check if MongoDB is running
@@ -495,7 +515,7 @@ docker logs mongodb
 docker run -d -p 27017:27017 --name mongodb mongo:6.0
 ```
 
-#### 6. Port Conflicts
+#### 8. Port Conflicts
 
 If ports 3000 or 8000 are in use:
 ```bash
@@ -511,7 +531,7 @@ lsof -i :3000
 kill -9 <PID>
 ```
 
-#### 7. Backend Won't Start
+#### 9. Backend Won't Start
 
 ```bash
 # Kill any stuck processes
@@ -533,6 +553,8 @@ Comprehensive documentation is available:
 - **[YOUTUBE_FIX.md](YOUTUBE_FIX.md)** - YouTube API implementation details
 - **[API_DOCS.md](API_DOCS.md)** - Complete API reference
 - **[FINAL_SUMMARY.md](FINAL_SUMMARY.md)** - Complete overview of all features and fixes
+- **[DEPLOY_TO_RENDER.md](DEPLOY_TO_RENDER.md)** - Step-by-step deployment guide
+- **[CORS_FIX_STEPS.md](CORS_FIX_STEPS.md)** - CORS troubleshooting for production
 
 ## 🔧 Management Scripts
 
@@ -563,6 +585,14 @@ chmod +x manage.sh test-app.sh health-check.sh
 
 ## 🚀 Deployment
 
+### 🌐 Live Demo
+
+The app is currently deployed on Render.com:
+
+- **Frontend**: [https://finance-sentiment-app-1.onrender.com](https://finance-sentiment-app-1.onrender.com)
+- **Backend API**: [https://finance-sentiment-app.onrender.com](https://finance-sentiment-app.onrender.com)
+- **API Docs**: [https://finance-sentiment-app.onrender.com/docs](https://finance-sentiment-app.onrender.com/docs)
+
 ### Deploy to Render.com (FREE)
 
 The easiest way to deploy this app is using **Render.com** - completely **FREE** with no credit card required!
@@ -576,6 +606,21 @@ Quick summary:
 4. **Total Cost**: $0/month ✨
 
 **One-Click Deploy**: Push to GitHub → Connect to Render → Done!
+
+#### ⚠️ Important: CORS Configuration
+
+For production deployment, the backend CORS settings are configured to allow:
+- Development: `localhost:3000`, `localhost:5173`
+- Production: `https://finance-sentiment-app-1.onrender.com`
+
+If deploying to a custom domain, update the CORS origins in `backend/app/main.py`:
+```python
+allowed_origins = [
+    "https://your-custom-domain.com",  # Add your domain
+]
+```
+
+See [CORS_FIX_STEPS.md](CORS_FIX_STEPS.md) for detailed CORS troubleshooting.
 
 ### Production Considerations
 
@@ -645,6 +690,16 @@ For issues, questions, or contributions:
 - ✅ **Management Scripts**: Easy service control
 - ✅ **Comprehensive Docs**: 7 detailed guides
 - ✅ **90%+ Confidence**: Enhanced analysis accuracy
+- ✅ **Production Ready**: Deployed on Render.com with CORS configured
+- ✅ **CORS Fix**: Production deployment issues resolved
+
+## Recent Updates (October 2025)
+
+### Latest Changes
+- 🔧 **Fixed CORS Configuration**: Backend now properly allows production frontend domain
+- 🌐 **Live Deployment**: App successfully deployed on Render.com
+- 📝 **Updated Documentation**: Added CORS troubleshooting guide
+- ✅ **Environment Variables**: Proper configuration for production deployment
 
 ## Roadmap
 
