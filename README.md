@@ -2,17 +2,6 @@
 
 A comprehensive FARM stack (FastAPI, React, MongoDB) application that provides AI-powered investment insights using sentiment analysis from multiple sources including YouTube videos, news articles, blog posts, and RSS feeds.
 
-## 🚀 QUICK START
-
-**Having issues? Backend not connecting?**
-
-👉 **See [START_HERE.md](START_HERE.md)** for the fastest fix!
-
-Or jump to:
-- 🆘 [AXIOS_ERROR_FIX.md](AXIOS_ERROR_FIX.md) - Fix connection errors
-- ✅ [CHECKLIST.md](CHECKLIST.md) - Track your setup progress
-- ⚡ [QUICKSTART.md](QUICKSTART.md) - 5-minute setup guide
-
 ## 🎉 Status: Production Ready
 
 ✅ **Fully Operational** with enhanced data collection (8-12 sources with API keys)  
@@ -105,10 +94,6 @@ finance-sentiment-app/
 
 ## Installation
 
-### 🚀 Quick Start (5 minutes)
-
-See **[QUICKSTART.md](QUICKSTART.md)** for the fastest setup, or **[QUICK_REFERENCE.md](QUICK_REFERENCE.md)** for a quick reference card.
-
 ### Prerequisites
 
 - Python 3.11+
@@ -116,31 +101,7 @@ See **[QUICKSTART.md](QUICKSTART.md)** for the fastest setup, or **[QUICK_REFERE
 - MongoDB 6.0+ (or use Docker)
 - Docker & Docker Compose (optional but recommended)
 
-### Option 1: Using Management Scripts (Recommended)
-
-We provide convenient management scripts for easy setup:
-
-```bash
-# Navigate to project
-cd finance-sentiment-app
-
-# Check service status
-./manage.sh status
-
-# Start backend
-./manage.sh start-backend
-
-# Start frontend (in another terminal)
-./manage.sh start-frontend
-
-# Test the API
-./manage.sh test-api
-
-# Open in browser
-./manage.sh open
-```
-
-### Option 2: Local Development
+### Option 1: Local Development
 
 #### Backend Setup
 
@@ -247,7 +208,7 @@ Note: First run will download the FinBERT model (~440MB). Wait ~30 seconds, then
 
 ### 3. API Endpoints
 
-For detailed API documentation, see **[API_DOCS.md](API_DOCS.md)** or visit http://localhost:8000/docs
+Interactive API documentation is at http://localhost:8000/docs once the backend is running.
 
 #### Sentiment Analysis
 ```bash
@@ -310,7 +271,7 @@ The app works great with **5+ free data sources** out of the box (no API keys re
 - Investing.com RSS  
 - Enhanced Mock Data
 
-**Want 8-12 sources?** Add free API keys (see **[DATA_SOURCES_GUIDE.md](DATA_SOURCES_GUIDE.md)**):
+**Want 8-12 sources?** Add free API keys:
 
 #### NewsAPI (Recommended - 100 requests/day free)
 ```bash
@@ -326,7 +287,8 @@ echo "FINNHUB_API_KEY=your_key_here" >> backend/.env
 
 Then restart the backend:
 ```bash
-./manage.sh restart-backend
+cd backend
+uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 ```
 
 ### API Keys (Optional Advanced)
@@ -337,48 +299,6 @@ For production use, you may want to integrate with:
 - **Alpha Vantage**: For stock market data (planned for v2.0)
 - **Twitter API**: For social media sentiment (planned)
 
-See **[DATA_SOURCES_GUIDE.md](DATA_SOURCES_GUIDE.md)** for detailed setup instructions.
-
-## 📚 Documentation
-
-Comprehensive documentation is available:
-
-- **[QUICKSTART.md](QUICKSTART.md)** - 5-minute setup guide
-- **[QUICK_REFERENCE.md](QUICK_REFERENCE.md)** - Quick reference card ⭐ Start here!
-- **[STATUS.md](STATUS.md)** - Current status & troubleshooting guide
-- **[DATA_SOURCES_GUIDE.md](DATA_SOURCES_GUIDE.md)** - How to add more data sources (get 8-12 instead of 5!)
-- **[YOUTUBE_FIX.md](YOUTUBE_FIX.md)** - YouTube API implementation details
-- **[API_DOCS.md](API_DOCS.md)** - Complete API reference
-- **[FINAL_SUMMARY.md](FINAL_SUMMARY.md)** - Complete overview of all features and fixes
-- **[DEPLOY_TO_RENDER.md](DEPLOY_TO_RENDER.md)** - Step-by-step deployment guide
-- **[CORS_FIX_STEPS.md](CORS_FIX_STEPS.md)** - CORS troubleshooting for production
-
-## 🔧 Management Scripts
-
-The project includes convenient management scripts:
-
-```bash
-# Service management
-./manage.sh status          # Check service status
-./manage.sh start-backend   # Start backend
-./manage.sh start-frontend  # Start frontend
-./manage.sh stop-all        # Stop all services
-./manage.sh restart-backend # Restart backend
-
-# Testing
-./manage.sh test-api        # Test API endpoints
-./manage.sh health          # Run health check
-./test-app.sh               # Comprehensive test suite
-
-# Utilities
-./manage.sh open            # Open app in browser
-./manage.sh logs-backend    # View backend logs
-```
-
-Make scripts executable:
-```bash
-chmod +x manage.sh test-app.sh health-check.sh
-```
 
 ## Model Information
 
@@ -440,8 +360,6 @@ npm test
 
 ## Troubleshooting
 
-For comprehensive troubleshooting, see **[STATUS.md](STATUS.md)** or **[QUICK_REFERENCE.md](QUICK_REFERENCE.md)**.
-
 ### Common Issues
 
 #### 1. CORS Errors in Production
@@ -452,7 +370,6 @@ For comprehensive troubleshooting, see **[STATUS.md](STATUS.md)** or **[QUICK_RE
 - Ensure your frontend URL is added to the backend CORS configuration
 - Check `backend/app/main.py` includes your domain in `allowed_origins`
 - Set `FRONTEND_URL` environment variable in Render backend settings
-- See **[CORS_FIX_STEPS.md](CORS_FIX_STEPS.md)** for detailed fix
 
 #### 2. API Requests Being Blocked (`ERR_BLOCKED_BY_CLIENT`)
 
@@ -519,10 +436,7 @@ docker run -d -p 27017:27017 --name mongodb mongo:6.0
 
 If ports 3000 or 8000 are in use:
 ```bash
-# Using management script
-./manage.sh stop-all
-
-# Or manually find and kill processes
+# Find and stop the process using the port
 lsof -i :8000  # Find process using port 8000
 kill -9 <PID>  # Kill the process
 
@@ -542,62 +456,13 @@ cd backend
 uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 ```
 
-## 📚 Documentation
-
-Comprehensive documentation is available:
-
-- **[QUICKSTART.md](QUICKSTART.md)** - 5-minute setup guide
-- **[QUICK_REFERENCE.md](QUICK_REFERENCE.md)** - Quick reference card ⭐ Start here!
-- **[STATUS.md](STATUS.md)** - Current status & troubleshooting guide
-- **[DATA_SOURCES_GUIDE.md](DATA_SOURCES_GUIDE.md)** - How to add more data sources (get 8-12 instead of 5!)
-- **[YOUTUBE_FIX.md](YOUTUBE_FIX.md)** - YouTube API implementation details
-- **[API_DOCS.md](API_DOCS.md)** - Complete API reference
-- **[FINAL_SUMMARY.md](FINAL_SUMMARY.md)** - Complete overview of all features and fixes
-- **[DEPLOY_TO_RENDER.md](DEPLOY_TO_RENDER.md)** - Step-by-step deployment guide
-- **[CORS_FIX_STEPS.md](CORS_FIX_STEPS.md)** - CORS troubleshooting for production
-
-## 🔧 Management Scripts
-
-The project includes convenient management scripts:
-
-```bash
-# Service management
-./manage.sh status          # Check service status
-./manage.sh start-backend   # Start backend
-./manage.sh start-frontend  # Start frontend
-./manage.sh stop-all        # Stop all services
-./manage.sh restart-backend # Restart backend
-
-# Testing
-./manage.sh test-api        # Test API endpoints
-./manage.sh health          # Run health check
-./test-app.sh               # Comprehensive test suite
-
-# Utilities
-./manage.sh open            # Open app in browser
-./manage.sh logs-backend    # View backend logs
-```
-
-Make scripts executable:
-```bash
-chmod +x manage.sh test-app.sh health-check.sh
-```
-
 ## 🚀 Deployment
-
-### 🌐 Live Demo
-
-The app is currently deployed on Render.com:
-
-- **Frontend**: [https://finance-sentiment-app-1.onrender.com](https://finance-sentiment-app-1.onrender.com)
-- **Backend API**: [https://finance-sentiment-app.onrender.com](https://finance-sentiment-app.onrender.com)
-- **API Docs**: [https://finance-sentiment-app.onrender.com/docs](https://finance-sentiment-app.onrender.com/docs)
 
 ### Deploy to Render.com (FREE)
 
 The easiest way to deploy this app is using **Render.com** - completely **FREE** with no credit card required!
 
-📖 **See [DEPLOY_TO_RENDER.md](DEPLOY_TO_RENDER.md) for complete step-by-step guide**
+📖 **See [docs/deployment/DEPLOY_TO_RENDER.md](docs/deployment/DEPLOY_TO_RENDER.md) for the step-by-step guide**
 
 Quick summary:
 1. **MongoDB Atlas** (free tier) - Database
@@ -611,7 +476,7 @@ Quick summary:
 
 For production deployment, the backend CORS settings are configured to allow:
 - Development: `localhost:3000`, `localhost:5173`
-- Production: `https://finance-sentiment-app-1.onrender.com`
+- Production: your frontend URL
 
 If deploying to a custom domain, update the CORS origins in `backend/app/main.py`:
 ```python
@@ -620,7 +485,6 @@ allowed_origins = [
 ]
 ```
 
-See [CORS_FIX_STEPS.md](CORS_FIX_STEPS.md) for detailed CORS troubleshooting.
 
 ### Production Considerations
 
@@ -639,8 +503,8 @@ See [CORS_FIX_STEPS.md](CORS_FIX_STEPS.md) for detailed CORS troubleshooting.
 # Build images
 docker-compose build
 
-# Run in production mode
-docker-compose -f docker-compose.prod.yml up -d
+# Run in the background
+docker-compose up -d
 ```
 
 ## Contributing
@@ -669,7 +533,6 @@ This application is for educational and informational purposes only. It does not
 ## Support
 
 For issues, questions, or contributions:
-- Check **[STATUS.md](STATUS.md)** and **[QUICK_REFERENCE.md](QUICK_REFERENCE.md)** first
 - Open an issue on GitHub
 - Submit a pull request
 
@@ -680,15 +543,12 @@ For issues, questions, or contributions:
 - **Confidence**: 90%+ on sentiment analysis
 - **Tech Stack**: FARM (FastAPI, React, MongoDB)
 - **AI Model**: FinBERT (ProsusAI/finbert)
-- **Documentation**: Comprehensive (7 guides available)
 
 ## ✨ Recent Enhancements (v1.5)
 
 - ✅ **5x Data Source Increase**: From 1 to 5+ free sources
 - ✅ **YouTube API Update**: Fixed and enhanced with translation support
 - ✅ **Improved Error Handling**: Better user messages
-- ✅ **Management Scripts**: Easy service control
-- ✅ **Comprehensive Docs**: 7 detailed guides
 - ✅ **90%+ Confidence**: Enhanced analysis accuracy
 - ✅ **Production Ready**: Deployed on Render.com with CORS configured
 - ✅ **CORS Fix**: Production deployment issues resolved
@@ -697,8 +557,6 @@ For issues, questions, or contributions:
 
 ### Latest Changes
 - 🔧 **Fixed CORS Configuration**: Backend now properly allows production frontend domain
-- 🌐 **Live Deployment**: App successfully deployed on Render.com
-- 📝 **Updated Documentation**: Added CORS troubleshooting guide
 - ✅ **Environment Variables**: Proper configuration for production deployment
 
 ## Roadmap

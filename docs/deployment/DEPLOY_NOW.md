@@ -78,7 +78,7 @@ Visit your frontend URL and test with "AAPL" or "TSLA"!
 
 - **Detailed Guide**: [DEPLOY_TO_RENDER.md](DEPLOY_TO_RENDER.md)
 - **Checklist**: [RENDER_CHECKLIST.md](RENDER_CHECKLIST.md)
-- **Architecture**: [ARCHITECTURE.md](ARCHITECTURE.md)
+- **Architecture**: [ARCHITECTURE.md](../ARCHITECTURE.md)
 
 ---
 
