@@ -1,0 +1,74 @@
+{
+  "dataset": "zeroshot/twitter-financial-news-sentiment (validation)",
+  "n": 2388,
+  "gold_counts": {
+    "negative": 347,
+    "positive": 475,
+    "neutral": 1566
+  },
+  "always_neutral": {
+    "accuracy": 0.6558,
+    "macro_f1": 0.264,
+    "per_class": {
+      "negative": {
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": 0.0
+      },
+      "neutral": {
+        "precision": 0.6558,
+        "recall": 1.0,
+        "f1": 0.7921
+      },
+      "positive": {
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": 0.0
+      }
+    }
+  },
+  "keywords": {
+    "accuracy": 0.724,
+    "macro_f1": 0.5502,
+    "per_class": {
+      "negative": {
+        "precision": 0.6763,
+        "recall": 0.2709,
+        "f1": 0.3868
+      },
+      "neutral": {
+        "precision": 0.7328,
+        "recall": 0.9457,
+        "f1": 0.8258
+      },
+      "positive": {
+        "precision": 0.6754,
+        "recall": 0.3242,
+        "f1": 0.4381
+      }
+    },
+    "seconds": 0.0
+  },
+  "finbert": {
+    "accuracy": 0.7253,
+    "macro_f1": 0.6682,
+    "per_class": {
+      "negative": {
+        "precision": 0.4935,
+        "recall": 0.7608,
+        "f1": 0.5986
+      },
+      "neutral": {
+        "precision": 0.853,
+        "recall": 0.7561,
+        "f1": 0.8016
+      },
+      "positive": {
+        "precision": 0.6108,
+        "recall": 0.5979,
+        "f1": 0.6043
+      }
+    },
+    "seconds": 70.8
+  }
+}

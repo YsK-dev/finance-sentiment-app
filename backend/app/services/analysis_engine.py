@@ -5,6 +5,18 @@ from app.services.sentiment_analyzer import sentiment_analyzer
 from app.services.data_collector import data_collector
 import numpy as np
 
+
+class NoNewsFound(Exception):
+    """No source returned any text for the symbol, so there is nothing to score."""
+
+
+def article_text(article: Dict[str, Any]) -> str:
+    """Headline plus summary; the headline alone when the summary only repeats it."""
+    title, summary = article.get("title") or "", article.get("content") or ""
+    if not summary or summary.startswith(title[:40]):
+        return title
+    return f"{title}. {summary}"
+
 class AnalysisEngine:
     def __init__(self):
         self.sentiment_weights = {
@@ -78,12 +90,14 @@ class AnalysisEngine:
         
         # Get news articles
         news_articles = await data_collector.get_news_articles(symbol)
-        data[SourceType.NEWS] = [article["content"] for article in news_articles]
+        data[SourceType.NEWS] = [article_text(a) for a in news_articles if article_text(a)]
         
         # Get blog posts
         blog_posts = await data_collector.get_blog_posts(symbol)
-        data[SourceType.BLOG] = [post["content"] for post in blog_posts]
-        
+        data[SourceType.BLOG] = [article_text(p) for p in blog_posts if article_text(p)]
+
+        if not any(data.values()):
+            raise NoNewsFound(f"No recent news found for {symbol}.")
         return data
 
     async def _analyze_sentiments(self, data_sources: Dict[SourceType, List[str]]) -> Dict[SourceType, Any]:

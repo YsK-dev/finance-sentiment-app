@@ -10,6 +10,12 @@ from datetime import datetime, timedelta
 from app.models.schemas import SourceType
 import os
 
+
+def plain_text(html: str) -> str:
+    """Feed summaries can be HTML (Google News sends a link and the outlet name); keep only the words."""
+    return BeautifulSoup(html or "", "html.parser").get_text(" ", strip=True)
+
+
 class DataCollector:
     def __init__(self):
         self.session = None
@@ -102,14 +108,9 @@ class DataCollector:
                 newsapi_articles = await self._get_newsapi_articles(symbol, api_key or self.news_api_key)
                 all_articles.extend(newsapi_articles)
             
-            # If no articles from APIs, use mock data
-            if not all_articles:
-                all_articles = await self._get_mock_news(symbol)
-                
         except Exception as e:
+            # No made-up fallback: if every source fails, the caller gets an empty list.
             print(f"Error fetching news: {e}")
-            # Fallback to mock data
-            all_articles = await self._get_mock_news(symbol)
         
         return all_articles[:20]  # Limit to 20 most recent articles
 
@@ -127,7 +128,7 @@ class DataCollector:
         articles = []
         for feed_url in rss_feeds:
             try:
-                feed = feedparser.parse(feed_url)
+                feed = await asyncio.to_thread(feedparser.parse, feed_url)  # parse() blocks; keep the server responsive
                 for entry in feed.entries[:10]:  # Limit to 10 entries per feed
                     title_lower = entry.get('title', '').lower()
                     summary_lower = entry.get('summary', '').lower()
@@ -135,7 +136,7 @@ class DataCollector:
                     if symbol.lower() in title_lower or symbol.lower() in summary_lower:
                         articles.append({
                             "title": entry.get('title', 'No title'),
-                            "content": entry.get('summary', entry.get('description', '')),
+                            "content": plain_text(entry.get('summary', entry.get('description', ''))),
                             "url": entry.get('link', ''),
                             "published": entry.get('published', datetime.now().isoformat()),
                             "source": feed_url
@@ -150,12 +151,12 @@ class DataCollector:
         articles = []
         try:
             feed_url = f"https://feeds.finance.yahoo.com/rss/2.0/headline?s={symbol}&region=US&lang=en-US"
-            feed = feedparser.parse(feed_url)
+            feed = await asyncio.to_thread(feedparser.parse, feed_url)  # parse() blocks; keep the server responsive
             
             for entry in feed.entries[:5]:
                 articles.append({
                     "title": entry.get('title', ''),
-                    "content": entry.get('summary', entry.get('description', '')),
+                    "content": plain_text(entry.get('summary', entry.get('description', ''))),
                     "url": entry.get('link', ''),
                     "published": entry.get('published', datetime.now().isoformat()),
                     "source": "Yahoo Finance"
@@ -170,12 +171,12 @@ class DataCollector:
         articles = []
         try:
             feed_url = f"https://news.google.com/rss/search?q={symbol}+stock+when:7d&hl=en-US&gl=US&ceid=US:en"
-            feed = feedparser.parse(feed_url)
+            feed = await asyncio.to_thread(feedparser.parse, feed_url)  # parse() blocks; keep the server responsive
             
             for entry in feed.entries[:5]:
                 articles.append({
                     "title": entry.get('title', ''),
-                    "content": entry.get('summary', entry.get('description', '')),
+                    "content": plain_text(entry.get('summary', entry.get('description', ''))),
                     "url": entry.get('link', ''),
                     "published": entry.get('published', datetime.now().isoformat()),
                     "source": "Google News"
@@ -236,47 +237,5 @@ class DataCollector:
         
         return articles
 
-    async def _get_mock_news(self, symbol: str) -> List[Dict[str, Any]]:
-        """Mock news data for demonstration with more varied content"""
-        # Enhanced mock data with realistic financial news
-        mock_articles = [
-            {
-                "title": f"{symbol} Reports Strong Q4 Earnings, Beats Analyst Expectations",
-                "content": f"{symbol} has announced its Q4 earnings, surpassing Wall Street expectations with strong revenue growth and improved profit margins. The company's strategic initiatives continue to drive positive results.",
-                "url": f"https://example.com/news/{symbol}-earnings",
-                "published": (datetime.now() - timedelta(hours=2)).isoformat(),
-                "source": "Financial Times"
-            },
-            {
-                "title": f"Analysts Upgrade {symbol} Stock Rating to 'Buy'",
-                "content": f"Leading investment firms have upgraded their outlook on {symbol}, citing strong fundamentals and positive market positioning. Price targets have been raised significantly.",
-                "url": f"https://example.com/news/{symbol}-upgrade",
-                "published": (datetime.now() - timedelta(hours=5)).isoformat(),
-                "source": "Bloomberg"
-            },
-            {
-                "title": f"{symbol} Announces Strategic Partnership for Market Expansion",
-                "content": f"{symbol} has formed a strategic alliance aimed at expanding its market reach and enhancing product offerings. Industry experts view this move favorably.",
-                "url": f"https://example.com/news/{symbol}-partnership",
-                "published": (datetime.now() - timedelta(hours=12)).isoformat(),
-                "source": "Reuters"
-            },
-            {
-                "title": f"Market Analysis: {symbol} Shows Resilience Amid Economic Uncertainty",
-                "content": f"Despite broader market volatility, {symbol} continues to demonstrate stability and growth potential. Technical indicators suggest bullish momentum.",
-                "url": f"https://example.com/news/{symbol}-analysis",
-                "published": (datetime.now() - timedelta(days=1)).isoformat(),
-                "source": "MarketWatch"
-            },
-            {
-                "title": f"Institutional Investors Increase Stakes in {symbol}",
-                "content": f"Recent SEC filings reveal that major institutional investors have increased their positions in {symbol}, signaling confidence in the company's long-term prospects.",
-                "url": f"https://example.com/news/{symbol}-institutional",
-                "published": (datetime.now() - timedelta(days=2)).isoformat(),
-                "source": "Seeking Alpha"
-            }
-        ]
-        
-        return mock_articles
 
 data_collector = DataCollector()

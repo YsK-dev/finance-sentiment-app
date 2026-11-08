@@ -66,3 +66,6 @@ htmlcov/
 
 # Docker
 docker-compose.override.yml
+
+# Local virtual environment
+.venv/

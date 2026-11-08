@@ -19,6 +19,11 @@ const Dashboard = () => {
 
         setLoading(true);
         setError('');
+        // Clear the previous symbol's results so they never show under a new error.
+        setAnalysis(null);
+        setAdvice(null);
+        setNewsArticles(null);
+        setBlogPosts(null);
 
         try {
             const [analysisResult, adviceResult, newsResult, blogsResult] = await Promise.all([
@@ -75,7 +80,10 @@ const Dashboard = () => {
                         Financial Sentiment Analysis
                     </h1>
                     <p className="text-lg text-gray-600">
-                        AI-powered investment insights using sentiment analysis from multiple sources
+                        Sentiment of recent news headlines for a stock, scored with FinBERT
+                    </p>
+                    <p className="text-sm text-gray-500 mt-1">
+                        A demo of text classification, not financial advice. The buy/hold/sell label is a fixed rule on the sentiment score and has not been tested against prices.
                     </p>
                 </div>
 

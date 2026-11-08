@@ -1,584 +1,134 @@
-# Finance Sentiment Analysis App
+# Finance Sentiment
 
-A comprehensive FARM stack (FastAPI, React, MongoDB) application that provides AI-powered investment insights using sentiment analysis from multiple sources including YouTube videos, news articles, blog posts, and RSS feeds.
+Type a stock symbol and the app collects recent news headlines about it, labels each one
+positive, negative or neutral with [FinBERT](https://huggingface.co/ProsusAI/finbert), and
+sums them up. It can also score the transcript of a YouTube video.
 
-## 🎉 Status: Production Ready
+FastAPI backend, React frontend, one Docker image.
 
-✅ **Fully Operational** with enhanced data collection (8-12 sources with API keys)  
-✅ **90-95% Confidence** scores on sentiment analysis  
-✅ **YouTube Analysis** with automatic language translation  
-✅ **Real-time Stock Analysis** with investment recommendations
+![Dashboard showing the sentiment of recent Apple headlines](docs/screenshot.png)
 
-## Features
+## How well the sentiment model works
 
-- 🤖 **AI-Powered Sentiment Analysis**: Uses FinBERT (Financial BERT) model for accurate financial sentiment analysis
-- 📊 **Multi-Source Data Collection**: Aggregates data from 5+ sources (Yahoo Finance, Google News, RSS feeds, and more)
-- 💡 **Investment Advice**: Generates actionable investment recommendations (BUY/HOLD/SELL) based on sentiment analysis
-- 📈 **Real-time Analysis**: Instant sentiment analysis for any stock symbol with 90%+ confidence
-- 🎥 **YouTube Transcript Analysis**: Analyzes financial content from YouTube videos with automatic translation support
-- 🎯 **Risk Assessment**: Comprehensive risk factor analysis and confidence scoring
-- 🔄 **Batch Processing**: Process multiple texts simultaneously
-- 🌐 **Multiple Data Sources**: No API keys required for basic usage (5+ free sources)
+Measured on the 2,388 labelled headlines in the validation split of
+[twitter-financial-news-sentiment](https://huggingface.co/datasets/zeroshot/twitter-financial-news-sentiment)
+(financial news headlines posted on Twitter, MIT licence). FinBERT was not trained on this set.
 
-## Tech Stack
+| Method | Accuracy | Macro F1 | Negative headlines found | Positive headlines found |
+|---|---|---|---|---|
+| Always answer "neutral" | 65.6% | 0.264 | 0% | 0% |
+| Keyword list (`SENTIMENT_MODEL=keywords`) | 72.4% | 0.550 | 27.1% | 32.4% |
+| **FinBERT (default)** | **72.5%** | **0.668** | **76.1%** | **59.8%** |
 
-### Backend
-- **FastAPI**: Modern, fast web framework for building APIs
-- **MongoDB**: NoSQL database for storing analysis results
-- **Motor**: Async MongoDB driver
-- **Transformers**: Hugging Face library for the FinBERT model
-- **PyTorch**: Deep learning framework
-- **YouTube Transcript API**: Extract transcripts from YouTube videos
-- **Feedparser**: RSS feed parsing
-- **BeautifulSoup4**: Web scraping
-- **Aiohttp**: Async HTTP client
+"Found" is recall: the share of truly negative (or positive) headlines that the method labels correctly.
 
-### Frontend
-- **React**: UI library
-- **Vite**: Fast build tool
-- **React Router**: Client-side routing
-- **Axios**: HTTP client
-- **Tailwind CSS**: Utility-first CSS framework
-- **Lucide React**: Beautiful icons
+What this shows:
 
-## Project Structure
+- Two out of three headlines are neutral, so accuracy alone flatters weak methods. Macro F1
+  weighs the three classes equally and is the fairer number.
+- FinBERT's main gain over the keyword list is finding negative and positive news: it finds
+  76% of negative headlines, the keyword list 27%.
+- FinBERT is far from perfect on this kind of text. When it says "negative" it is right about half
+  the time (precision 49%), because it often reads neutral market news as negative.
 
-```
-finance-sentiment-app/
-├── backend/
-│   ├── app/
-│   │   ├── __init__.py
-│   │   ├── main.py                    # FastAPI application
-│   │   ├── models/
-│   │   │   ├── __init__.py
-│   │   │   └── schemas.py            # Pydantic models
-│   │   ├── routes/
-│   │   │   ├── __init__.py
-│   │   │   ├── sentiment.py          # Sentiment analysis endpoints
-│   │   │   ├── analysis.py           # Symbol analysis endpoints
-│   │   │   └── data.py               # Data collection endpoints
-│   │   ├── services/
-│   │   │   ├── __init__.py
-│   │   │   ├── sentiment_analyzer.py # FinBERT sentiment analyzer
-│   │   │   ├── data_collector.py     # Multi-source data collector
-│   │   │   └── analysis_engine.py    # Investment analysis engine
-│   │   └── utils/
-│   │       ├── __init__.py
-│   │       └── database.py           # MongoDB connection
-│   ├── requirements.txt
-│   ├── Dockerfile
-│   └── .env
-├── frontend/
-│   ├── src/
-│   │   ├── components/
-│   │   │   └── Header.jsx
-│   │   ├── pages/
-│   │   │   ├── Dashboard.jsx
-│   │   │   ├── SymbolAnalysis.jsx
-│   │   │   └── YouTubeAnalyzer.jsx
-│   │   ├── services/
-│   │   │   └── api.js
-│   │   ├── App.jsx
-│   │   ├── main.jsx
-│   │   └── index.css
-│   ├── public/
-│   ├── package.json
-│   ├── vite.config.js
-│   ├── tailwind.config.js
-│   ├── postcss.config.js
-│   ├── Dockerfile
-│   └── index.html
-├── docker-compose.yml
-└── README.md
-```
+Reproduce with `python evaluation/evaluate.py` (writes `evaluation/results.json`).
 
-## Installation
+## How a stock gets its label
 
-### Prerequisites
+1. **Collect.** Five recent articles each from Yahoo Finance and Google News (five more each from
+   NewsAPI and Finnhub when their API keys are set), plus posts from four financial RSS feeds that
+   mention the symbol. If no source returns anything, the API says so (HTTP 404); it never fills in sample data.
+2. **Label.** Each headline (with its summary when the summary adds something) goes through FinBERT.
+3. **Combine.** The most common label in each source wins, and sources are weighted (news 0.4,
+   blogs 0.2). The confidence shown is the model's score for the winning label, weighted the same way.
+4. **Map.** A fixed rule turns the result into buy, hold or sell.
 
-- Python 3.11+
-- Node.js 18+
-- MongoDB 6.0+ (or use Docker)
-- Docker & Docker Compose (optional but recommended)
+## Limits
 
-### Option 1: Local Development
+- **The buy/hold/sell label is not tested against prices.** It is a fixed rule on the
+  sentiment, not a trading signal and not financial advice.
+- **Most stocks come out neutral,** because most headlines are neutral and each source takes
+  its most common label.
+- **English only.** FinBERT was trained on English financial text.
+- **Long transcripts.** FinBERT reads about 350 words at a time, so a transcript is split into
+  300-word pieces (up to 40) and the scores are averaged.
+- **YouTube often blocks cloud servers,** so the video page may work only when you run the app
+  yourself.
 
-#### Backend Setup
+## Run it
 
-1. Navigate to the backend directory:
+**Docker** (one container serves both the API and the web page):
+
 ```bash
+docker compose up --build
+# open http://localhost:8000
+```
+
+The image downloads FinBERT (438 MB) while it builds, so the first request does not wait for it.
+On a Mac, loading FinBERT and scoring a batch of headlines used up to 1.4 GB of memory.
+
+**Local development:**
+
+```bash
+# Backend (Python 3.12)
 cd backend
-```
+python -m venv .venv && source .venv/bin/activate
+pip install --extra-index-url https://download.pytorch.org/whl/cpu -r requirements-dev.txt
+uvicorn app.main:app --reload --port 8000
 
-2. Create a virtual environment:
-```bash
-python -m venv venv
-source venv/bin/activate  # On Windows: venv\Scripts\activate
-```
-
-3. Install dependencies:
-```bash
-pip install -r requirements.txt
-```
-
-4. Set up environment variables:
-```bash
-cp .env.example .env
-# Edit .env with your configuration
-```
-
-5. Start MongoDB:
-```bash
-# Using Docker
-docker run -d -p 27017:27017 --name mongodb mongo:6.0
-
-# Or use a local MongoDB installation
-```
-
-6. Run the backend:
-```bash
-uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
-```
-
-The backend API will be available at `http://localhost:8000`
-API documentation: `http://localhost:8000/docs`
-
-#### Frontend Setup
-
-1. Navigate to the frontend directory:
-```bash
+# Frontend, in a second terminal (proxies /api to port 8000)
 cd frontend
+npm ci && npm run dev
+# open http://localhost:3000
 ```
 
-2. Install dependencies:
-```bash
-npm install
-```
+Settings go in `backend/.env` (see `backend/.env.example`):
 
-3. Start the development server:
-```bash
-npm run dev
-```
+| Variable | Meaning |
+|---|---|
+| `SENTIMENT_MODEL` | `finbert` (default) or `keywords` for machines without enough memory |
+| `NEWS_API_KEY`, `FINNHUB_API_KEY` | Optional extra news sources |
 
-The frontend will be available at `http://localhost:3000`
+## API
 
-### Option 2: Docker Compose (Easiest)
+Interactive documentation is at `/docs` once the app is running.
 
-1. Make sure Docker and Docker Compose are installed
+| Method and path | What it returns |
+|---|---|
+| `GET /api/analysis/symbol/{symbol}` | Overall sentiment, score per source, suggested label |
+| `GET /api/analysis/advice/{symbol}` | The buy/hold/sell label with its reasoning |
+| `GET /api/data/news/{symbol}` | The collected articles |
+| `POST /api/sentiment/analyze` | Sentiment of one text: `{"text": "..."}` |
+| `POST /api/sentiment/batch` | Sentiment of a JSON list of texts |
+| `POST /api/sentiment/youtube/transcript` | Sentiment of a video transcript: `{"video_id": "..."}` |
 
-2. From the project root directory:
-```bash
-docker-compose up --build
-```
+## Tests
 
-This will start all services:
-- Backend API: `http://localhost:8000`
-- Frontend: `http://localhost:3000`
-- MongoDB: `localhost:27017`
-
-Note: First run will download the FinBERT model (~440MB). Wait ~30 seconds, then visit http://localhost:3000
-
-## 🎯 Usage
-
-### 1. Dashboard - Stock Symbol Analysis
-
-1. Open the app at `http://localhost:3000`
-2. Enter a stock symbol (e.g., AAPL, TSLA, MSFT)
-3. Click "Analyze"
-4. View:
-   - Overall sentiment (Positive/Negative/Neutral)
-   - Confidence score
-   - Risk level
-   - Key insights
-   - Investment advice (BUY/HOLD/SELL)
-   - Risk factors
-
-### 2. YouTube Video Analysis
-
-1. Navigate to "YouTube Analysis" in the header
-2. Paste a YouTube video URL (must have English captions/transcripts)
-3. Click "Analyze Video"
-4. View:
-   - Transcript preview
-   - Sentiment analysis with confidence scores
-   - Automatic language translation (if available)
-   - Video sentiment breakdown
-
-**Note**: Video must have captions/transcripts available. Auto-generated captions and translations are supported.
-
-### 3. API Endpoints
-
-Interactive API documentation is at http://localhost:8000/docs once the backend is running.
-
-#### Sentiment Analysis
-```bash
-POST /api/sentiment/analyze
-Content-Type: application/json
-
-{
-  "text": "Company earnings exceeded expectations",
-  "source_type": "news"
-}
-```
-
-#### Symbol Analysis
-```bash
-GET /api/analysis/symbol/{symbol}?days=7
-```
-
-#### Investment Advice
-```bash
-GET /api/analysis/advice/{symbol}
-```
-
-#### YouTube Analysis
-```bash
-POST /api/sentiment/youtube/transcript
-Content-Type: application/json
-
-{
-  "video_id": "dQw4w9WgXcQ",
-  "language": "en"
-}
-```
-
-## Configuration
-
-### Backend Environment Variables
-
-Create a `.env` file in the `backend` directory (or copy from `.env.example`):
-
-```env
-# Database
-MONGODB_URI=mongodb://localhost:27017/finance_sentiment
-DATABASE_NAME=finance_sentiment
-
-# Optional API Keys (for enhanced data sources)
-NEWS_API_KEY=your_newsapi_key_here        # Optional - Sign up at newsapi.org
-FINNHUB_API_KEY=your_finnhub_key_here    # Optional - Sign up at finnhub.io
-
-# Application Settings
-ENVIRONMENT=development
-CORS_ORIGINS=http://localhost:3000,http://127.0.0.1:3000
-```
-
-### 📈 Enhanced Data Sources (Optional)
-
-The app works great with **5+ free data sources** out of the box (no API keys required):
-- Yahoo Finance RSS Feeds
-- Google News Financial News
-- MarketWatch RSS
-- Investing.com RSS  
-- Enhanced Mock Data
-
-**Want 8-12 sources?** Add free API keys:
-
-#### NewsAPI (Recommended - 100 requests/day free)
-```bash
-# Sign up: https://newsapi.org/register
-echo "NEWS_API_KEY=your_key_here" >> backend/.env
-```
-
-#### Finnhub (60 calls/minute free)
-```bash
-# Sign up: https://finnhub.io/register
-echo "FINNHUB_API_KEY=your_key_here" >> backend/.env
-```
-
-Then restart the backend:
 ```bash
 cd backend
-uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
+pytest            # fast tests; the news sources are faked, no network needed
+pytest -m slow    # also downloads FinBERT and checks it on three clear headlines
 ```
 
-### API Keys (Optional Advanced)
+GitHub Actions runs the fast tests, builds the frontend, and builds and checks the Docker image
+on every push.
 
-For production use, you may want to integrate with:
-- **NewsAPI**: For real-time news articles (100 requests/day free)
-- **Finnhub**: For financial data and news (60 calls/minute free)
-- **Alpha Vantage**: For stock market data (planned for v2.0)
-- **Twitter API**: For social media sentiment (planned)
+## Project layout
 
-
-## Model Information
-
-This application uses the **ProsusAI/finbert** model from Hugging Face:
-- Fine-tuned BERT model for financial sentiment analysis
-- Trained on financial texts
-- Classifies text as Positive, Negative, or Neutral
-- Provides confidence scores for each classification
-
-The model is automatically downloaded on first run (~440MB).
-
-## Development
-
-### Adding New Data Sources
-
-1. Extend `data_collector.py`:
-```python
-async def get_twitter_posts(self, symbol: str) -> List[Dict[str, Any]]:
-    # Implement Twitter data collection
-    pass
+```
+backend/app/
+  main.py                      FastAPI app; also serves the built frontend
+  routes/                      HTTP endpoints
+  services/data_collector.py   news, RSS and YouTube collection
+  services/sentiment_analyzer.py  FinBERT and the keyword baseline
+  services/analysis_engine.py  combines headline labels into one result
+backend/tests/                 pytest tests
+evaluation/evaluate.py         the accuracy measurement above
+frontend/src/                  React app (Vite, Tailwind)
+Dockerfile                     builds the frontend, then the Python image
 ```
 
-2. Update `analysis_engine.py` to include the new source:
-```python
-self.sentiment_weights = {
-    SourceType.NEWS: 0.3,
-    SourceType.YOUTUBE: 0.2,
-    SourceType.BLOG: 0.2,
-    SourceType.SOCIAL: 0.2,
-    SourceType.TWITTER: 0.1
-}
-```
+## Licence
 
-### Running Tests
-
-```bash
-# Backend tests
-cd backend
-pytest
-
-# Frontend tests
-cd frontend
-npm test
-```
-
-## Performance Optimization
-
-### Backend
-- Async request handling with FastAPI
-- Rate limiting with asyncio-throttle
-- Batch processing for multiple texts
-- MongoDB indexing for faster queries
-
-### Frontend
-- Code splitting with React Router
-- Lazy loading components
-- Memoization for expensive calculations
-- Optimized re-renders
-
-## Troubleshooting
-
-### Common Issues
-
-#### 1. CORS Errors in Production
-
-**Problem**: `Access to XMLHttpRequest has been blocked by CORS policy`
-
-**Solution**: 
-- Ensure your frontend URL is added to the backend CORS configuration
-- Check `backend/app/main.py` includes your domain in `allowed_origins`
-- Set `FRONTEND_URL` environment variable in Render backend settings
-
-#### 2. API Requests Being Blocked (`ERR_BLOCKED_BY_CLIENT`)
-
-**Problem**: Browser extension (ad blocker) is blocking API requests to localhost
-
-**Solution**: Disable ad blocker for localhost/127.0.0.1
-- **Chrome/Edge**: Click extension icon → Disable for this site
-- **Firefox**: Click shield icon → Turn off Enhanced Tracking Protection
-
-#### 3. YouTube Analysis Fails (404 Error)
-
-**Problem**: Video doesn't have captions/transcripts available
-
-**Solution**: 
-- Try a different video with English captions
-- Look for the "CC" icon on YouTube videos
-- The app now supports automatic translation for non-English captions
-
-#### 4. "Limited data sources" Warning
-
-**Solutions**:
-- Wait a few seconds for RSS feeds to load
-- Try popular stocks (AAPL, TSLA, GOOGL work best)
-- Add free API keys (NewsAPI, Finnhub) for 8-12 sources
-
-#### 5. Cold Start Delays (Production)
-
-**Problem**: First request takes 30-60 seconds on Render.com free tier
-
-**Solution**:
-- This is normal for Render's free tier (services sleep after 15 minutes)
-- Subsequent requests will be fast
-- Use [UptimeRobot](https://uptimerobot.com/) to keep the service awake (ping every 5 min)
-- Or upgrade to Render Starter plan ($7/month) for always-on service
-
-#### 6. Model Loading Issues
-
-If the FinBERT model fails to load:
-```bash
-# Clear Hugging Face cache
-rm -rf ~/.cache/huggingface/
-
-# Re-download the model
-python -c "from transformers import AutoTokenizer, AutoModelForSequenceClassification; AutoTokenizer.from_pretrained('ProsusAI/finbert'); AutoModelForSequenceClassification.from_pretrained('ProsusAI/finbert')"
-```
-
-#### 7. MongoDB Connection Issues
-
-```bash
-# Check if MongoDB is running
-docker ps | grep mongodb
-
-# Restart MongoDB
-docker restart mongodb
-
-# Check logs
-docker logs mongodb
-
-# Or start MongoDB with Docker
-docker run -d -p 27017:27017 --name mongodb mongo:6.0
-```
-
-#### 8. Port Conflicts
-
-If ports 3000 or 8000 are in use:
-```bash
-# Find and stop the process using the port
-lsof -i :8000  # Find process using port 8000
-kill -9 <PID>  # Kill the process
-
-# For port 3000
-lsof -i :3000
-kill -9 <PID>
-```
-
-#### 9. Backend Won't Start
-
-```bash
-# Kill any stuck processes
-kill -9 $(lsof -ti:8000)
-
-# Restart from backend directory
-cd backend
-uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
-```
-
-## 🚀 Deployment
-
-### Deploy to Render.com (FREE)
-
-The easiest way to deploy this app is using **Render.com** - completely **FREE** with no credit card required!
-
-📖 **See [docs/deployment/DEPLOY_TO_RENDER.md](docs/deployment/DEPLOY_TO_RENDER.md) for the step-by-step guide**
-
-Quick summary:
-1. **MongoDB Atlas** (free tier) - Database
-2. **Render Backend** (free tier) - Python/FastAPI
-3. **Render Frontend** (free tier) - Static React site
-4. **Total Cost**: $0/month ✨
-
-**One-Click Deploy**: Push to GitHub → Connect to Render → Done!
-
-#### ⚠️ Important: CORS Configuration
-
-For production deployment, the backend CORS settings are configured to allow:
-- Development: `localhost:3000`, `localhost:5173`
-- Production: your frontend URL
-
-If deploying to a custom domain, update the CORS origins in `backend/app/main.py`:
-```python
-allowed_origins = [
-    "https://your-custom-domain.com",  # Add your domain
-]
-```
-
-
-### Production Considerations
-
-1. **Environment Variables**: Use secure secret management
-2. **CORS**: Update allowed origins in `main.py`
-3. **MongoDB**: Use MongoDB Atlas or a managed service
-4. **Reverse Proxy**: Use Nginx for production
-5. **SSL/TLS**: Enable HTTPS
-6. **Rate Limiting**: Implement API rate limiting
-7. **Monitoring**: Add logging and monitoring (e.g., Sentry)
-8. **Caching**: Implement Redis for caching results
-
-### Deploy with Docker
-
-```bash
-# Build images
-docker-compose build
-
-# Run in the background
-docker-compose up -d
-```
-
-## Contributing
-
-1. Fork the repository
-2. Create a feature branch
-3. Commit your changes
-4. Push to the branch
-5. Create a Pull Request
-
-## License
-
-This project is licensed under the MIT License.
-
-## Acknowledgments
-
-- **FinBERT**: ProsusAI for the financial sentiment analysis model
-- **Hugging Face**: For the Transformers library
-- **FastAPI**: For the excellent web framework
-- **React**: For the powerful UI library
-
-## Disclaimer
-
-This application is for educational and informational purposes only. It does not provide financial advice. Always consult with a qualified financial advisor before making investment decisions.
-
-## Support
-
-For issues, questions, or contributions:
-- Open an issue on GitHub
-- Submit a pull request
-
-## 📊 Project Stats
-
-- **Status**: ✅ Production Ready
-- **Data Sources**: 5+ (up to 12 with API keys)
-- **Confidence**: 90%+ on sentiment analysis
-- **Tech Stack**: FARM (FastAPI, React, MongoDB)
-- **AI Model**: FinBERT (ProsusAI/finbert)
-
-## ✨ Recent Enhancements (v1.5)
-
-- ✅ **5x Data Source Increase**: From 1 to 5+ free sources
-- ✅ **YouTube API Update**: Fixed and enhanced with translation support
-- ✅ **Improved Error Handling**: Better user messages
-- ✅ **90%+ Confidence**: Enhanced analysis accuracy
-- ✅ **Production Ready**: Deployed on Render.com with CORS configured
-- ✅ **CORS Fix**: Production deployment issues resolved
-
-## Recent Updates (October 2025)
-
-### Latest Changes
-- 🔧 **Fixed CORS Configuration**: Backend now properly allows production frontend domain
-- ✅ **Environment Variables**: Proper configuration for production deployment
-
-## Roadmap
-
-### v2.0 (Planned)
-- [ ] Add real-time stock price integration
-- [ ] Implement user authentication
-- [ ] Add portfolio tracking
-- [ ] Add more data sources (Twitter/X, Reddit)
-- [ ] Implement historical analysis
-- [ ] Alpha Vantage API integration
-
-### v2.1 (Future)
-- [ ] Create mobile app version
-- [ ] Add technical indicators
-- [ ] Create email alerts
-- [ ] Add multi-language support
-- [ ] Implement A/B testing for recommendations
-- [ ] Advanced charting and visualization
-
----
-
-**Built with ❤️ using the FARM Stack**
-
-**Status**: ✅ Production Ready | **Version**: 1.5 | **Last Updated**: October 2025
+The code is released under the MIT License. The FinBERT model is licensed CC BY-NC-SA 4.0, which does not allow
+commercial use.

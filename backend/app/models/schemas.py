@@ -29,6 +29,8 @@ class SentimentResponse(BaseModel):
     sentiment: SentimentLabel
     confidence: float = Field(..., ge=0.0, le=1.0)
     raw_scores: Dict[str, float]
+    model: str = Field(..., description="Which model produced the label: finbert or keywords")
+    chunks: Optional[int] = Field(None, description="For long texts: how many pieces were scored and averaged")
 
 
 class YouTubeTranscriptRequest(BaseModel):

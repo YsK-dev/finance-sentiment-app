@@ -7,10 +7,7 @@ export default defineConfig({
         port: 3000,
         host: 'localhost',
         strictPort: true,
-        hmr: {
-            protocol: 'ws',
-            host: 'localhost',
-            port: 3000
-        }
-    }
+        // Send API calls to the FastAPI backend during development.
+        proxy: { '/api': 'http://127.0.0.1:8000' },
+    },
 })

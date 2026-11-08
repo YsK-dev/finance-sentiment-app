@@ -1,6 +1,6 @@
 from fastapi import APIRouter, HTTPException
 from app.models.schemas import AnalysisResult, InvestmentAdvice, NewsRequest
-from app.services.analysis_engine import analysis_engine
+from app.services.analysis_engine import NoNewsFound, analysis_engine
 
 router = APIRouter()
 
@@ -10,6 +10,8 @@ async def analyze_symbol(symbol: str, days: int = 7):
     try:
         result = await analysis_engine.analyze_symbol(symbol.upper(), days)
         return result
+    except NoNewsFound as e:
+        raise HTTPException(status_code=404, detail=str(e))
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Analysis failed: {str(e)}")
 
@@ -19,6 +21,8 @@ async def get_investment_advice(symbol: str):
     try:
         advice = await analysis_engine.get_investment_advice(symbol.upper())
         return advice
+    except NoNewsFound as e:
+        raise HTTPException(status_code=404, detail=str(e))
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Advice generation failed: {str(e)}")
 
@@ -29,5 +33,7 @@ async def analyze_news_sentiment(request: NewsRequest):
         # This would integrate with actual news APIs in production
         analysis = await analysis_engine.analyze_symbol(request.symbol, request.days)
         return analysis
+    except NoNewsFound as e:
+        raise HTTPException(status_code=404, detail=str(e))
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"News analysis failed: {str(e)}")
