@@ -34,11 +34,6 @@ export const analyzeSymbol = async (symbol) => {
     return response.data;
 };
 
-export const getInvestmentAdvice = async (symbol) => {
-    const response = await api.get(`/api/analysis/advice/${symbol}`);
-    return response.data;
-};
-
 export const analyzeYouTubeVideo = async (videoId) => {
     const response = await api.post('/api/sentiment/youtube/transcript', {
         video_id: videoId,
@@ -50,18 +45,12 @@ export const analyzeYouTubeVideo = async (videoId) => {
 export const analyzeTextSentiment = async (text) => {
     const response = await api.post('/api/sentiment/analyze', {
         text: text,
-        source_type: 'news'
     });
     return response.data;
 };
 
 export const getNewsArticles = async (symbol) => {
     const response = await api.get(`/api/data/news/${symbol}`);
-    return response.data;
-};
-
-export const getBlogPosts = async (symbol) => {
-    const response = await api.get(`/api/data/blogs/${symbol}`);
     return response.data;
 };
 

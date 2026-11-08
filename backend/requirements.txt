@@ -7,7 +7,7 @@ python-dotenv>=1.0
 
 # Sentiment model (FinBERT)
 transformers>=4.45
-torch>=2.4
+torch>=2.6
 
 # Data collection
 aiohttp>=3.9

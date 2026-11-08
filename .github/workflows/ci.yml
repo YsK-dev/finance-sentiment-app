@@ -2,7 +2,7 @@ name: CI
 
 on:
   push:
-  pull_request:
+  workflow_dispatch:
 
 jobs:
   backend:
@@ -49,3 +49,6 @@ jobs:
             -d '{"text": "The company cuts its outlook after a large quarterly loss"}' | tee out.json
           grep -q '"model":"finbert"' out.json
           grep -q '"sentiment":"negative"' out.json
+      - name: Show the app's log if a step failed
+        if: failure()
+        run: docker logs app

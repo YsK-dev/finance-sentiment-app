@@ -2,8 +2,8 @@ from typing import List
 
 from fastapi import APIRouter, Body, HTTPException
 from app.models.schemas import SentimentRequest, SentimentResponse, YouTubeTranscriptRequest
-from app.services.sentiment_analyzer import sentiment_analyzer
 from app.services.data_collector import data_collector
+from app.services.sentiment_analyzer import sentiment_analyzer
 
 router = APIRouter()
 
@@ -29,7 +29,7 @@ async def get_youtube_sentiment(request: YouTubeTranscriptRequest):
         if not transcript:
             raise HTTPException(
                 status_code=404, 
-                detail=f"Transcript not available for video {request.video_id} in language '{request.language}'. The video may not have captions, or captions may only be available in other languages."
+                detail=f"No transcript in '{request.language}' for video {request.video_id}, and none that YouTube can translate into it."
             )
         
         # Score the whole transcript in pieces, not only its first 512 tokens

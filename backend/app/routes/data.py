@@ -1,22 +1,25 @@
 from fastapi import APIRouter, HTTPException
+
 from app.services.data_collector import data_collector
 
 router = APIRouter()
 
+
 @router.get("/news/{symbol}")
 async def get_news_articles(symbol: str):
-    """Get news articles for a symbol"""
+    """The articles collected for a symbol (an empty list when no source answers)."""
     try:
-        articles = await data_collector.get_news_articles(symbol)
-        return {"symbol": symbol, "articles": articles}
+        symbol = symbol.upper()
+        return {"symbol": symbol, "articles": await data_collector.get_news_articles(symbol)}
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Failed to fetch news: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to fetch news: {e}")
 
-@router.get("/blogs/{symbol}")
-async def get_blog_posts(symbol: str):
-    """Get blog posts for a symbol"""
+
+@router.get("/feeds/{symbol}")
+async def get_feed_posts(symbol: str):
+    """Posts from general market news feeds that name the symbol."""
     try:
-        posts = await data_collector.get_blog_posts(symbol)
-        return {"symbol": symbol, "posts": posts}
+        symbol = symbol.upper()
+        return {"symbol": symbol, "posts": await data_collector.get_feed_posts(symbol)}
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Failed to fetch blog posts: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to fetch feed posts: {e}")

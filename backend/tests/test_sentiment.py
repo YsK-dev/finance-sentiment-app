@@ -1,6 +1,9 @@
+import threading
+from pathlib import Path
+
 import pytest
 
-from app.services.sentiment_analyzer import SentimentAnalyzer, keyword_sentiment
+from app.services.sentiment_analyzer import FINBERT_REVISION, SentimentAnalyzer, keyword_sentiment
 
 
 def test_keywords_positive_and_negative():
@@ -43,3 +46,26 @@ def test_long_text_is_scored_in_pieces_and_averaged():
     # Two positive pieces and one neutral piece: positive 2/3 on average.
     assert result.sentiment.value == "positive"
     assert abs(result.confidence - 2 / 3) < 1e-9
+
+
+def test_concurrent_first_requests_load_the_model_once(monkeypatch):
+    loads = []
+
+    def fake_load(self):
+        loads.append(1)
+        threading.Event().wait(0.2)  # a slow load, so the threads overlap
+        return lambda texts, **kw: [[{"label": "neutral", "score": 1.0}] for _ in texts]
+
+    monkeypatch.setattr(SentimentAnalyzer, "_load", fake_load)
+    analyzer = SentimentAnalyzer("finbert")
+    threads = [threading.Thread(target=analyzer.predict, args=(["text"],)) for _ in range(4)]
+    for t in threads:
+        t.start()
+    for t in threads:
+        t.join()
+    assert len(loads) == 1
+
+
+def test_docker_image_downloads_the_same_model_revision():
+    dockerfile = (Path(__file__).resolve().parents[2] / "Dockerfile").read_text()
+    assert f"FINBERT_REVISION={FINBERT_REVISION}" in dockerfile

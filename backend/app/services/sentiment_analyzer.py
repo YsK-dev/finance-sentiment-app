@@ -8,11 +8,13 @@ evaluation table) and exists only as a baseline and for machines that cannot hol
 import asyncio
 import os
 import re
+import threading
 from typing import List
 
 from app.models.schemas import SentimentLabel, SentimentResponse
 
 FINBERT = "ProsusAI/finbert"
+FINBERT_REVISION = "0bc2ac10dda6929bcb1f77ccc43c7ec5c424f031"  # pinned so results stay reproducible
 
 POSITIVE_WORDS = {"profit", "profits", "gain", "gains", "growth", "increase", "increases", "rise", "rises",
                   "bullish", "strong", "positive", "beat", "beats", "exceed", "exceeds", "outperform",
@@ -44,20 +46,29 @@ class SentimentAnalyzer:
         if self.model not in ("finbert", "keywords"):
             raise ValueError(f"SENTIMENT_MODEL must be 'finbert' or 'keywords', not {self.model!r}")
         self._classifier = None
+        # One lock for loading and for running the model: requests arrive on several threads,
+        # and the model must load once and the shared tokenizer must not run twice at a time.
+        self._lock = threading.Lock()
 
-    def _finbert(self):
-        # Loaded on first use so that importing the app (and the tests) stays fast.
-        if self._classifier is None:
-            from transformers import pipeline
-            self._classifier = pipeline("text-classification", model=FINBERT, top_k=None)
-        return self._classifier
+    def _load(self):
+        from transformers import pipeline
+        return pipeline("text-classification", model=FINBERT, revision=FINBERT_REVISION, top_k=None)
+
+    def load(self) -> None:
+        """Load FinBERT now instead of on the first request (the app calls this at startup)."""
+        if self.model == "finbert":
+            with self._lock:
+                if self._classifier is None:
+                    self._classifier = self._load()
 
     def predict(self, texts: List[str]) -> List[SentimentResponse]:
         """Label a list of texts in one batch. Blocking; the async methods run it in a thread."""
         texts = [" ".join(t.split()) for t in texts]
         if self.model == "keywords":
             return [keyword_sentiment(t) for t in texts]
-        out = self._finbert()(texts, batch_size=16, truncation=True, max_length=512)
+        self.load()
+        with self._lock:
+            out = self._classifier(texts, batch_size=16, truncation=True, max_length=512)
         results = []
         for scores in out:
             raw = {s["label"]: float(s["score"]) for s in scores}

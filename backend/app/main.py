@@ -1,20 +1,35 @@
 import os
+from contextlib import asynccontextmanager
 from pathlib import Path
 
 from dotenv import load_dotenv
-from fastapi import FastAPI, HTTPException
-from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse
-from fastapi.staticfiles import StaticFiles
 
-from app.routes import analysis, data, sentiment
-
+# Read backend/.env before the services are imported: they read their settings at import time.
 load_dotenv()
+
+import asyncio  # noqa: E402
+
+from fastapi import FastAPI, HTTPException  # noqa: E402
+from fastapi.middleware.cors import CORSMiddleware  # noqa: E402
+from fastapi.responses import FileResponse  # noqa: E402
+
+from app.routes import analysis, data, sentiment  # noqa: E402
+from app.services.data_collector import data_collector  # noqa: E402
+from app.services.sentiment_analyzer import sentiment_analyzer  # noqa: E402
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    await asyncio.to_thread(sentiment_analyzer.load)  # load FinBERT once, before the first request
+    yield
+    await data_collector.close_session()
+
 
 app = FastAPI(
     title="Finance Sentiment Analysis API",
     description="News sentiment for stock symbols, scored with FinBERT",
     version="2.0.0",
+    lifespan=lifespan,
 )
 
 # The Vite dev server runs on another port; in the single-container build the
@@ -34,17 +49,25 @@ async def health_check():
     return {"status": "healthy", "service": "finance-sentiment-api"}
 
 
-# Serve the built React app when it is present (the Docker image builds it into STATIC_DIR).
-STATIC_DIR = Path(os.getenv("STATIC_DIR", Path(__file__).resolve().parents[2] / "frontend" / "dist"))
-if (STATIC_DIR / "index.html").exists():
-    app.mount("/assets", StaticFiles(directory=STATIC_DIR / "assets"), name="assets")
+def add_frontend(app: FastAPI, static_dir: Path) -> None:
+    """Serve the built React app: real files as they are, every other page path as index.html."""
+    static_dir = static_dir.resolve()
 
-    @app.get("/{path:path}", include_in_schema=False)
-    async def spa(path: str):
-        # Client-side routes (/youtube, ...) all load index.html; React Router takes over.
+    @app.api_route("/{path:path}", methods=["GET", "HEAD"], include_in_schema=False)
+    async def frontend(path: str):
         if path.startswith("api/"):
             raise HTTPException(status_code=404, detail="Not found")
-        return FileResponse(STATIC_DIR / "index.html")
+        file = (static_dir / path).resolve()
+        if path and file.is_file() and file.is_relative_to(static_dir):
+            return FileResponse(file)
+        # Client-side routes (/youtube, ...) load index.html; React Router takes over.
+        return FileResponse(static_dir / "index.html")
+
+
+# The Docker image builds the frontend into STATIC_DIR; locally it is frontend/dist after `npm run build`.
+STATIC_DIR = Path(os.getenv("STATIC_DIR", Path(__file__).resolve().parents[2] / "frontend" / "dist"))
+if (STATIC_DIR / "index.html").exists():
+    add_frontend(app, STATIC_DIR)
 else:
     @app.get("/")
     async def root():
