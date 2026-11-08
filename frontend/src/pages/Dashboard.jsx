@@ -125,8 +125,8 @@ const Dashboard = () => {
                                     </span>
                                 </div>
                                 <p className="text-sm text-gray-600">
-                                    The rule: mostly positive headlines give BUY, mostly neutral give HOLD, mostly
-                                    negative give SELL. It has not been tested against prices.
+                                    The rule uses the most common label: positive gives BUY, neutral gives HOLD,
+                                    negative gives SELL. It has not been tested against prices.
                                 </p>
                             </div>
                         </div>

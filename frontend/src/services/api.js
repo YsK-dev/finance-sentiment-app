@@ -42,16 +42,4 @@ export const analyzeYouTubeVideo = async (videoId) => {
     return response.data;
 };
 
-export const analyzeTextSentiment = async (text) => {
-    const response = await api.post('/api/sentiment/analyze', {
-        text: text,
-    });
-    return response.data;
-};
-
-export const getNewsArticles = async (symbol) => {
-    const response = await api.get(`/api/data/news/${symbol}`);
-    return response.data;
-};
-
 export default api;

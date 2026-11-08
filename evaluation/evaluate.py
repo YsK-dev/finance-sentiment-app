@@ -15,7 +15,7 @@ Methods compared:
 Each row is one headline, scored on its own. The app also adds article summaries and combines
 many headlines; that is not measured here.
 
-  pip install -r backend/requirements-dev.txt
+  pip install -r backend/requirements.txt -r evaluation/requirements.txt
   python evaluation/evaluate.py            # writes evaluation/results.json
 """
 

@@ -72,7 +72,7 @@ const YouTubeAnalyzer = () => {
                                 className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
                             />
                             <p className="mt-2 text-sm text-gray-500">
-                                📌 Note: Video must have English captions/transcripts available
+                                📌 Note: the video needs English captions, or captions YouTube can translate into English
                             </p>
                         </div>
                         <button

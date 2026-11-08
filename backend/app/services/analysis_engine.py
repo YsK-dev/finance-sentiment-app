@@ -5,8 +5,9 @@ Every headline is labelled on its own. The overall label is the most common one,
 HOLD (neutral) or SELL (negative); the rule has not been tested against prices.
 """
 
+import re
 from collections import Counter
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Any, Dict, List
 
 from app.models.schemas import AnalysisResult, ScoredArticle, SentimentLabel
@@ -22,10 +23,18 @@ class NoNewsFound(Exception):
     """No source returned any text for the symbol, so there is nothing to score."""
 
 
+def _letters(text: str) -> str:
+    return re.sub(r"[^a-z0-9]", "", text.lower())
+
+
 def article_text(article: Dict[str, Any]) -> str:
-    """Headline plus summary; the headline alone when the summary only repeats it."""
+    """Headline plus summary; the headline alone when the summary only repeats it.
+
+    Google News summaries are "headline outlet" while the title is "headline - outlet", so the
+    comparison ignores everything but letters and digits.
+    """
     title, summary = article.get("title") or "", article.get("content") or ""
-    if not summary or summary.startswith(title[:40]):
+    if not summary or _letters(summary).startswith(_letters(title)[:40]):
         return title
     return f"{title}. {summary}"
 
@@ -62,7 +71,7 @@ class AnalysisEngine:
             articles=[ScoredArticle(title=a["title"], url=a.get("url", ""), source=a.get("source", ""),
                                     published=a.get("published", ""), sentiment=r.sentiment, score=r.confidence)
                       for a, r in zip(articles, labels)],
-            timestamp=datetime.now(),
+            timestamp=datetime.now(timezone.utc),
         )
 
 

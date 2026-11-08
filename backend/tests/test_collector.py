@@ -41,6 +41,8 @@ def test_article_text_skips_a_summary_that_repeats_the_headline():
     title = "Apple stock rises after strong iPhone sales - Reuters"
     assert article_text({"title": title, "content": "Apple stock rises after strong iPhone sales Reuters"}) == title
     assert article_text({"title": "Apple rises", "content": "Sales beat estimates."}) == "Apple rises. Sales beat estimates."
+    # Google News: the outlet sits inside the first 40 characters of a short headline.
+    assert article_text({"title": "AAPL Stock Quote - CNN", "content": "AAPL Stock Quote CNN"}) == "AAPL Stock Quote - CNN"
 
 
 def test_repeated_headlines_count_once():

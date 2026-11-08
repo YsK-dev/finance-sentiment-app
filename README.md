@@ -72,6 +72,8 @@ It never fills in sample data.
   app asks YouTube for an English translation and gives up if there is none.
 - **Long transcripts.** FinBERT reads about 350 words at a time, so a transcript is split into
   300-word pieces (up to 40) and their scores are averaged.
+- **Feeds are not always on topic.** Yahoo Finance's feed for a symbol sometimes includes
+  headlines about other companies, and they are scored too.
 - **YouTube often blocks cloud servers,** so the video page may work only when you run the app
   yourself.
 
@@ -85,8 +87,7 @@ docker compose up --build
 ```
 
 The image downloads FinBERT (438 MB) while it builds and then runs offline, so the first request
-does not wait for a download. In one measurement on a Mac, loading FinBERT and scoring a batch of
-headlines used up to 1.4 GB of memory.
+does not wait for a download.
 
 **Local development:**
 
@@ -134,8 +135,8 @@ pytest -m slow      # only the FinBERT test (downloads the model)
 pytest -m ""        # everything
 ```
 
-On every push, GitHub Actions runs the fast tests, builds the frontend, and builds the Docker
-image and checks that it answers.
+A GitHub Actions workflow (`.github/workflows/ci.yml`) runs the fast tests, builds the frontend,
+and builds the Docker image and checks that it answers.
 
 ## Project layout
 
