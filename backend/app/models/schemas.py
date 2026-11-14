@@ -1,65 +1,48 @@
-from pydantic import BaseModel, Field
-from enum import Enum
-from typing import List, Dict, Optional, Any
 from datetime import datetime
+from enum import Enum
+from typing import Dict, List, Optional
+
+from pydantic import BaseModel, Field
 
 
 class SentimentLabel(str, Enum):
-    """Sentiment classification labels"""
     POSITIVE = "positive"
     NEGATIVE = "negative"
     NEUTRAL = "neutral"
 
 
-class SourceType(str, Enum):
-    """Data source types"""
-    NEWS = "news"
-    YOUTUBE = "youtube"
-    BLOG = "blog"
-    SOCIAL = "social"
-
-
 class SentimentRequest(BaseModel):
-    """Request model for sentiment analysis"""
     text: str = Field(..., min_length=1, description="Text to analyze")
 
 
 class SentimentResponse(BaseModel):
-    """Response model for sentiment analysis"""
     sentiment: SentimentLabel
-    confidence: float = Field(..., ge=0.0, le=1.0)
+    confidence: float = Field(..., ge=0.0, le=1.0, description="Model score for the label (not a calibrated probability)")
     raw_scores: Dict[str, float]
+    model: str = Field(..., description="Which model produced the label: finbert or keywords")
+    chunks: Optional[int] = Field(None, description="For long texts: how many pieces were scored and averaged")
 
 
 class YouTubeTranscriptRequest(BaseModel):
-    """Request model for YouTube transcript analysis"""
     video_id: str = Field(..., description="YouTube video ID")
     language: str = Field(default="en", description="Transcript language code")
 
 
+class ScoredArticle(BaseModel):
+    title: str
+    url: str
+    source: str
+    published: str
+    sentiment: SentimentLabel
+    score: float = Field(..., description="Model score for this headline's label")
+
+
 class AnalysisResult(BaseModel):
-    """Comprehensive analysis result"""
     symbol: str
-    overall_sentiment: SentimentLabel
-    confidence_score: float = Field(..., ge=0.0, le=1.0)
-    source_breakdown: Dict[str, float]
-    recommendation: str
-    risk_level: str
-    key_insights: List[str]
+    overall_sentiment: SentimentLabel = Field(..., description="The most common label among the headlines")
+    agreement: float = Field(..., ge=0.0, le=1.0, description="Share of headlines with the overall label")
+    label_counts: Dict[str, int]
+    rule_label: str = Field(..., description="BUY, HOLD or SELL: positive, neutral or negative overall")
+    model: str
+    articles: List[ScoredArticle]
     timestamp: datetime
-
-
-class InvestmentAdvice(BaseModel):
-    """Investment advice model"""
-    symbol: str
-    action: str
-    confidence: float = Field(..., ge=0.0, le=1.0)
-    reasoning: List[str]
-    time_horizon: str
-    risk_factors: List[str]
-
-
-class NewsRequest(BaseModel):
-    """Request model for news analysis"""
-    symbol: str
-    days: int = Field(default=7, ge=1, le=30, description="Number of days to analyze")

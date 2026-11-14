@@ -34,15 +34,8 @@ const YouTubeAnalyzer = () => {
             console.error('YouTube analysis error:', err);
             
             // Provide more specific error messages
-            if (err.response?.status === 404) {
-                setError('This video does not have captions/transcripts available, or they may only be available in other languages. Please try a different video with English captions.');
-            } else if (err.response?.status === 500) {
-                setError(err.response?.data?.detail || 'Failed to analyze video. The video may not have transcripts available.');
-            } else if (err.message?.includes('Network Error')) {
-                setError('Cannot connect to the server. Make sure the backend is running.');
-            } else {
-                setError('Failed to analyze video. Please check the URL and try again, or try a different video.');
-            }
+            // The API client turns the server's explanation into err.message.
+            setError(err.message || 'Failed to analyze video. Please check the URL and try again.');
         } finally {
             setLoading(false);
         }
@@ -64,7 +57,7 @@ const YouTubeAnalyzer = () => {
                         YouTube Video Analysis
                     </h1>
                     <p className="text-lg text-gray-600">
-                        Analyze financial content from YouTube videos using AI sentiment analysis
+                        Score the sentiment of a video's English transcript with FinBERT
                     </p>
                 </div>
 
@@ -79,7 +72,7 @@ const YouTubeAnalyzer = () => {
                                 className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
                             />
                             <p className="mt-2 text-sm text-gray-500">
-                                📌 Note: Video must have English captions/transcripts available
+                                📌 Note: the video needs English captions, or captions YouTube can translate into English
                             </p>
                         </div>
                         <button
@@ -123,11 +116,16 @@ const YouTubeAnalyzer = () => {
                                         </span>
                                     </div>
                                     <div className="flex justify-between">
-                                        <span>Confidence:</span>
+                                        <span>Model score:</span>
                                         <span className="font-semibold">
                                             {(analysis.sentiment.confidence * 100).toFixed(1)}%
                                         </span>
                                     </div>
+                                    {analysis.sentiment.chunks > 1 && (
+                                        <p className="text-xs text-gray-500">
+                                            Average over {analysis.sentiment.chunks} pieces of about 300 words each.
+                                        </p>
+                                    )}
                                     <div className="flex justify-between">
                                         <span>Positive Score:</span>
                                         <span>{(analysis.sentiment.raw_scores.positive * 100).toFixed(1)}%</span>
@@ -168,7 +166,7 @@ const YouTubeAnalyzer = () => {
                         <li>Copy the URL of any YouTube video with financial content</li>
                         <li>Paste the URL in the input field above</li>
                         <li>Click "Analyze Video" to get sentiment analysis of the transcript</li>
-                        <li>Works best with earnings calls, financial news, and analysis videos</li>
+                        <li>The video needs English captions, or captions that YouTube can translate into English</li>
                     </ul>
                 </div>
             </div>

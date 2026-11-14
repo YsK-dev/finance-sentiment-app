@@ -1,0 +1,172 @@
+{
+  "dataset": "zeroshot/twitter-financial-news-sentiment@ccbe24de (validation)",
+  "model": "ProsusAI/finbert@0bc2ac10",
+  "versions": {
+    "python": "3.12.10",
+    "torch": "2.15.0",
+    "transformers": "5.22.2",
+    "datasets": "5.1.0",
+    "scikit-learn": "1.9.1"
+  },
+  "n": 2388,
+  "gold_counts": {
+    "negative": 347,
+    "positive": 475,
+    "neutral": 1566
+  },
+  "always_neutral": {
+    "accuracy": 0.6558,
+    "macro_f1": 0.264,
+    "per_class": {
+      "negative": {
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": 0.0
+      },
+      "neutral": {
+        "precision": 0.6558,
+        "recall": 1.0,
+        "f1": 0.7921
+      },
+      "positive": {
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": 0.0
+      }
+    },
+    "confusion": {
+      "negative": {
+        "negative": 0,
+        "neutral": 347,
+        "positive": 0
+      },
+      "neutral": {
+        "negative": 0,
+        "neutral": 1566,
+        "positive": 0
+      },
+      "positive": {
+        "negative": 0,
+        "neutral": 475,
+        "positive": 0
+      }
+    }
+  },
+  "keywords": {
+    "accuracy": 0.724,
+    "macro_f1": 0.5502,
+    "per_class": {
+      "negative": {
+        "precision": 0.6763,
+        "recall": 0.2709,
+        "f1": 0.3868
+      },
+      "neutral": {
+        "precision": 0.7328,
+        "recall": 0.9457,
+        "f1": 0.8258
+      },
+      "positive": {
+        "precision": 0.6754,
+        "recall": 0.3242,
+        "f1": 0.4381
+      }
+    },
+    "confusion": {
+      "negative": {
+        "negative": 94,
+        "neutral": 230,
+        "positive": 23
+      },
+      "neutral": {
+        "negative": 34,
+        "neutral": 1481,
+        "positive": 51
+      },
+      "positive": {
+        "negative": 11,
+        "neutral": 310,
+        "positive": 154
+      }
+    },
+    "seconds": 0.0
+  },
+  "tfidf_logreg": {
+    "accuracy": 0.8317,
+    "macro_f1": 0.761,
+    "per_class": {
+      "negative": {
+        "precision": 0.7554,
+        "recall": 0.6052,
+        "f1": 0.672
+      },
+      "neutral": {
+        "precision": 0.8582,
+        "recall": 0.931,
+        "f1": 0.8931
+      },
+      "positive": {
+        "precision": 0.7737,
+        "recall": 0.6695,
+        "f1": 0.7178
+      }
+    },
+    "confusion": {
+      "negative": {
+        "negative": 210,
+        "neutral": 108,
+        "positive": 29
+      },
+      "neutral": {
+        "negative": 44,
+        "neutral": 1458,
+        "positive": 64
+      },
+      "positive": {
+        "negative": 24,
+        "neutral": 133,
+        "positive": 318
+      }
+    },
+    "seconds": 1.4
+  },
+  "finbert": {
+    "accuracy": 0.7253,
+    "macro_f1": 0.6682,
+    "per_class": {
+      "negative": {
+        "precision": 0.4935,
+        "recall": 0.7608,
+        "f1": 0.5986
+      },
+      "neutral": {
+        "precision": 0.853,
+        "recall": 0.7561,
+        "f1": 0.8016
+      },
+      "positive": {
+        "precision": 0.6108,
+        "recall": 0.5979,
+        "f1": 0.6043
+      }
+    },
+    "confusion": {
+      "negative": {
+        "negative": 264,
+        "neutral": 71,
+        "positive": 12
+      },
+      "neutral": {
+        "negative": 213,
+        "neutral": 1184,
+        "positive": 169
+      },
+      "positive": {
+        "negative": 58,
+        "neutral": 133,
+        "positive": 284
+      }
+    },
+    "seconds": 30.5
+  }
+}
