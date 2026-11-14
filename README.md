@@ -149,6 +149,7 @@ backend/app/
   services/analysis_engine.py     combines the headline labels into one result
 backend/tests/                    pytest tests
 evaluation/evaluate.py            the measurement above
+training/finetune_finbert.ipynb   trains FinBERT further on the training headlines (Kaggle GPU)
 frontend/src/                     React app (Vite, Tailwind)
 Dockerfile                        builds the frontend, then the Python image
 ```

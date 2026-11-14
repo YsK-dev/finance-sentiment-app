@@ -69,3 +69,6 @@ docker-compose.override.yml
 
 # Local virtual environment
 .venv/
+
+# Local output of training/finetune_finbert.ipynb
+finetune_outputs/
